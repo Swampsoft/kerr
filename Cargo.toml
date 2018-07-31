@@ -1,0 +1,13 @@
+[package]
+name = "kerr"
+version = "0.1.0"
+authors = ["Martin Billinger <flkazemakase@gmail.com>"]
+
+[dependencies]
+ambisonic = "0.2"
+rodio = "0.8"
+
+[dependencies.ggez]
+version = "0.4"
+features = ["cargo-resource-root"]
+
