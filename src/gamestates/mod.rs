@@ -1,4 +1,5 @@
 
+pub mod wormhole;
 pub mod hello;
 
 use ggez::{Context, GameResult, event::EventHandler};

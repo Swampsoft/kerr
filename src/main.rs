@@ -4,7 +4,7 @@ mod gamestates;
 
 use ggez::{conf, GameResult};
 
-use gamestates::{hello::HelloState, StateManager};
+use gamestates::{wormhole::WormholeState, StateManager};
 
 fn main() -> GameResult<()> {
     let c = conf::Conf {
@@ -15,7 +15,7 @@ fn main() -> GameResult<()> {
 
     let ctx = &mut ggez::Context::load_from_conf("Kerr", "Swampsoft Games", c).unwrap();
 
-    let main_state = &mut StateManager::new(HelloState::new(ctx)?);
+    let main_state = &mut StateManager::new(WormholeState::new(ctx)?);
 
     ggez::event::run(ctx, main_state)
 }
