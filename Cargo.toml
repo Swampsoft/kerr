@@ -6,6 +6,8 @@ authors = ["Martin Billinger <flkazemakase@gmail.com>"]
 [dependencies]
 ambisonic = "0.2"
 rodio = "0.8"
+specs = "0.12"
+specs-derive = "0.2"
 
 [dependencies.ggez]
 version = "0.4"

@@ -1,6 +1,12 @@
 extern crate ggez;
+extern crate specs;
+#[macro_use]
+extern crate specs_derive;
 
+mod components;
 mod gamestates;
+mod systems;
+mod utils;
 
 use ggez::{conf, GameResult};
 
