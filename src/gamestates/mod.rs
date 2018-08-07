@@ -1,8 +1,7 @@
-
-pub mod wormhole;
 pub mod hello;
+pub mod wormhole;
 
-use ggez::{Context, GameResult, event::EventHandler};
+use ggez::{event::EventHandler, Context, GameResult};
 
 pub trait GameState {
     /// update. return `Ok(true)` if the state below should be updated too.
@@ -10,7 +9,9 @@ pub trait GameState {
     fn draw(&mut self, ctx: &mut Context) -> GameResult<()>;
 
     /// override if this state is not completete opaque and the previous state should be drown too
-    fn draw_previous(&self) -> bool { false }
+    fn draw_previous(&self) -> bool {
+        false
+    }
 }
 
 pub struct StateManager {
@@ -20,7 +21,7 @@ pub struct StateManager {
 impl StateManager {
     pub fn new<T: GameState + 'static>(initial_state: T) -> Self {
         StateManager {
-            states: vec![Box::new(initial_state)]
+            states: vec![Box::new(initial_state)],
         }
     }
 
@@ -38,12 +39,12 @@ impl StateManager {
 impl EventHandler for StateManager {
     fn update(&mut self, ctx: &mut Context) -> GameResult<()> {
         if self.states.is_empty() {
-            return ctx.quit()
+            return ctx.quit();
         }
 
         for state in self.states.iter_mut().rev() {
             if !state.update(ctx)? {
-                break
+                break;
             }
         }
 

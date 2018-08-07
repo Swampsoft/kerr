@@ -5,6 +5,7 @@ extern crate specs_derive;
 
 mod components;
 mod gamestates;
+mod resources;
 mod systems;
 mod utils;
 

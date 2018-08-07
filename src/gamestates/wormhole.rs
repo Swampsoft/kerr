@@ -1,21 +1,20 @@
 use std::f32;
 
 use ggez::{
-    graphics::{self, DrawMode, DrawParam, Image, Mesh, MeshBuilder, Point2, Rect}, Context, GameResult,
+    graphics::{self, DrawMode, MeshBuilder, Point2, Rect}, Context,
+    GameResult,
 };
 
 use specs::{Builder, Dispatcher, DispatcherBuilder, RunNow, World};
 
 use super::GameState;
-use components::{register_components, Pos, PlayerSprite};
-use systems::PlayerSpriteSystem;
-use utils::fix_sprite;
+use components::{register_components, Pos, Sprite};
+use resources::Resources;
+use systems::SpriteRenderSystem;
 
 pub struct WormholeState {
     world: World,
     dispatcher: Dispatcher<'static, 'static>,
-
-    player_sprite: Image,
 
     z_pos: f32,
 }
@@ -26,18 +25,22 @@ impl WormholeState {
 
         register_components(&mut world);
 
-        world.create_entity()
-            .with(Pos{z: 0.0, r: 1.3, w: 0.1})
-            .with(PlayerSprite);
+        let player_sprite = world.write_resource::<Resources>().add_image(ctx, "/originals/faction5/F5S1.png")?;
+
+        world
+            .create_entity()
+            .with(Pos {
+                z: 0.0,
+                r: 1.3,
+                w: 0.1,
+            })
+            .with(Sprite(player_sprite));
 
         let dispatcher = DispatcherBuilder::new().build();
-
-        let player_sprite = Image::new(ctx, "/originals/faction5/F5S1.png")?;
 
         let s = WormholeState {
             world,
             dispatcher,
-            player_sprite,
             z_pos: 0.0,
         };
         Ok(s)
@@ -96,8 +99,7 @@ impl GameState for WormholeState {
 
         // too bad we cannot use the dispatcher for the rendering systems...
         {
-            PlayerSpriteSystem::new(ctx, &self.player_sprite)
-                .run_now(&self.world.res);
+            SpriteRenderSystem::new(ctx).run_now(&self.world.res);
         }
 
         graphics::present(ctx);

@@ -1,5 +1,6 @@
-
-use ggez::{graphics::{self, Point2}, Context, GameResult};
+use ggez::{
+    graphics::{self, Point2}, Context, GameResult,
+};
 
 use super::GameState;
 
