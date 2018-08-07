@@ -25,7 +25,7 @@ impl WormholeState {
 
         register_components(&mut world);
 
-        let player_sprite = world.write_resource::<Resources>().add_image(ctx, "/originals/faction5/F5S1.png")?;
+        let player_sprite = world.write_resource::<Resources>().add_image(ctx, "/ship_perspective.png")?;
 
         world
             .create_entity()
