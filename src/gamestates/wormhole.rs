@@ -11,6 +11,7 @@ use super::GameState;
 use components::{register_components, Pos, Sprite};
 use resources::Resources;
 use systems::SpriteRenderSystem;
+use three_dee::projection_factor;
 
 pub struct WormholeState {
     world: World,
@@ -29,11 +30,32 @@ impl WormholeState {
 
         world
             .create_entity()
-            .with(Pos {
-                z: 0.0,
-                r: 1.3,
-                w: 0.1,
-            })
+            .with(Pos::new(1.0, 0.0, 2.0))
+            .with(Sprite(player_sprite));
+
+        world
+            .create_entity()
+            .with(Pos::new(1.0, 0.1, 3.0))
+            .with(Sprite(player_sprite));
+
+        world
+            .create_entity()
+            .with(Pos::new(1.0, 0.2, 4.0))
+            .with(Sprite(player_sprite));
+
+        world
+            .create_entity()
+            .with(Pos::new(1.0, 0.3, 5.0))
+            .with(Sprite(player_sprite));
+
+        world
+            .create_entity()
+            .with(Pos::new(1.0, 0.4, 6.0))
+            .with(Sprite(player_sprite));
+
+        world
+            .create_entity()
+            .with(Pos::new(1.0, 0.5, 7.0))
             .with(Sprite(player_sprite));
 
         let dispatcher = DispatcherBuilder::new().build();
@@ -52,8 +74,8 @@ impl GameState for WormholeState {
         self.dispatcher.dispatch(&self.world.res);
 
         self.z_pos -= 0.01;
-        if self.z_pos <= 0.0 {
-            self.z_pos = 10.0;
+        while self.z_pos <= 0.0 {
+            self.z_pos += 2.0;
         }
         Ok(false)
     }
@@ -64,33 +86,29 @@ impl GameState for WormholeState {
 
         let mut mb = MeshBuilder::new();
 
-        for z in 0..30 {
-            let z = 0.1 + (z as f32 + self.z_pos % 1.0) / 5.0;
+        for z in 0..20 {
+            let z = 0.1 + (z as f32 + self.z_pos % 1.0) * 1.0;
 
-            let z = z + z * z / 2.0;
-            //let z = z.sqrt();
+            let p = projection_factor(z);
 
             mb.circle(
-                DrawMode::Line(0.01 / z),
-                Point2::new(0.0, 0.0) / z,
-                1.0 / z,
+                DrawMode::Line((0.03 * p).max(0.01)),
+                Point2::new(0.0, 0.0) * p,
+                1.0 * p,
                 0.001,
             );
         }
 
-        let z1 = self.z_pos;
-        let z2 = self.z_pos + 0.1;
-
-        let z1 = (z1 + z1 * z1 / 2.0) * 0.3;
-        let z2 = (z2 + z2 * z2 / 2.0) * 0.3;
+        let p1 = projection_factor(self.z_pos * 10.0 );
+        let p2 = projection_factor(self.z_pos * 10.0 + 1.0);
 
         mb.line(
-            &[Point2::new(0.7, 0.7) / z1, Point2::new(0.7, 0.7) / z2],
-            0.02 / z1,
+            &[Point2::new(0.7, 0.7) * p1, Point2::new(0.7, 0.7) * p2],
+            0.02 * p1,
         );
         mb.line(
-            &[Point2::new(0.8, 0.7) / z1, Point2::new(0.8, 0.7) / z2],
-            0.02 / z1,
+            &[Point2::new(0.8, 0.7) * p1, Point2::new(0.8, 0.7) * p2],
+            0.02 * p1,
         );
 
         let mesh = mb.build(ctx)?;

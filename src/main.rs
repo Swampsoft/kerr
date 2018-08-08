@@ -7,6 +7,7 @@ mod components;
 mod gamestates;
 mod resources;
 mod systems;
+mod three_dee;
 mod utils;
 
 use ggez::{conf, GameResult};

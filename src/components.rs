@@ -1,7 +1,7 @@
-
 use specs::prelude::*;
 
 use resources::Resources;
+use three_dee::Cylindric;
 
 pub fn register_components(world: &mut World) {
     world.register::<Pos>();
@@ -16,20 +16,24 @@ pub struct DeltaTime(pub f64);
 
 #[derive(Debug, Component)]
 #[storage(VecStorage)]
-pub struct Pos {
-    pub z: f32,
-    pub r: f32,
-    pub w: f32,
-}
+pub struct Pos(pub Cylindric);
 
 #[derive(Debug, Component)]
 #[storage(VecStorage)]
-pub struct Vel {
-    pub z: f32,
-    pub r: f32,
-    pub w: f32,
-}
+pub struct Vel(pub Cylindric);
 
 #[derive(Debug, Component)]
 #[storage(VecStorage)]
 pub struct Sprite(pub usize);
+
+impl Pos {
+    pub fn new(r: f32, w: f32, z: f32) -> Self {
+        Pos(Cylindric::new(r, w, z))
+    }
+}
+
+impl Vel {
+    pub fn new(r: f32, w: f32, z: f32) -> Self {
+        Vel(Cylindric::new(r, w, z))
+    }
+}
