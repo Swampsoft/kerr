@@ -1,18 +1,25 @@
 use specs::prelude::*;
 
+use inputstate::InputState;
 use resources::Resources;
 use three_dee::Cylindric;
 
 pub fn register_components(world: &mut World) {
+    world.register::<Controlled>();
     world.register::<Pos>();
     world.register::<Sprite>();
     world.register::<Vel>();
 
     world.add_resource(DeltaTime(0.0));
+    world.add_resource(InputState::new());
     world.add_resource(Resources::new());
 }
 
 pub struct DeltaTime(pub f64);
+
+#[derive(Debug, Component, Default)]
+#[storage(NullStorage)]
+pub struct Controlled;
 
 #[derive(Debug, Component)]
 #[storage(VecStorage)]

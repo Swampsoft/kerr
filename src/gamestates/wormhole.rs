@@ -5,17 +5,21 @@ use ggez::{
     GameResult,
 };
 
+use sdl2::keyboard::{Keycode, Scancode, Mod};
+
 use specs::{Builder, Dispatcher, DispatcherBuilder, RunNow, World};
 
-use super::GameState;
+use super::{GameState, StateTransition};
 use components::{register_components, Pos, Sprite};
 use resources::Resources;
-use systems::SpriteRenderSystem;
+use systems::{InputSystem, SpriteRenderSystem};
 use three_dee::projection_factor;
 
 pub struct WormholeState {
     world: World,
     dispatcher: Dispatcher<'static, 'static>,
+
+    quit: bool,
 
     z_pos: f32,
 }
@@ -58,18 +62,29 @@ impl WormholeState {
             .with(Pos::new(1.0, 0.5, 7.0))
             .with(Sprite(player_sprite));
 
-        let dispatcher = DispatcherBuilder::new().build();
+        let dispatcher = DispatcherBuilder::new()
+            .with(InputSystem, "input", &[])
+            .build();
 
         let s = WormholeState {
             world,
             dispatcher,
             z_pos: 0.0,
+            quit: false,
         };
         Ok(s)
     }
 }
 
 impl GameState for WormholeState {
+    fn transition(&self) -> StateTransition {
+        if self.quit {
+            StateTransition::Pop
+        } else {
+            StateTransition::None
+        }
+    }
+
     fn update(&mut self, _ctx: &mut Context) -> GameResult<bool> {
         self.dispatcher.dispatch(&self.world.res);
 
@@ -122,6 +137,18 @@ impl GameState for WormholeState {
 
         graphics::present(ctx);
         Ok(())
+    }
+
+    fn key_down_event(&mut self, scancode: Scancode, keycode: Keycode, keymod: Mod, repeat: bool) -> bool {
+        if scancode == Scancode::Escape {
+            self.quit = true;
+        }
+        
+        false
+    }
+
+    fn key_up_event(&mut self, scancode: Scancode, keycode: Keycode, keymod: Mod, repeat: bool) -> bool {
+        false
     }
 }
 

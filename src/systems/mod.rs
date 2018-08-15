@@ -6,7 +6,8 @@ use ggez::{
 
 use specs::prelude::*;
 
-use components::{Sprite, Pos};
+use components::{Controlled, Sprite, Pos};
+use inputstate::InputState;
 use resources::Resources;
 use three_dee::projection;
 use utils::fix_sprite;
@@ -41,6 +42,17 @@ impl<'a, 'c> System<'a> for SpriteRenderSystem<'c> {
                     }),
                 )
                 .unwrap();
+        }
+    }
+}
+
+pub struct InputSystem;
+
+impl<'a> System<'a> for InputSystem {
+    type SystemData = (Read<'a, InputState>, ReadStorage<'a, Controlled>, ReadStorage<'a, Pos>);
+
+    fn run(&mut self, (inp, ctr, pos): Self::SystemData) {
+        for (c, p) in (&ctr, &pos).join() {
         }
     }
 }
