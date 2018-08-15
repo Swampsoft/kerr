@@ -10,7 +10,8 @@ use sdl2::keyboard::{Keycode, Scancode, Mod};
 use specs::{Builder, Dispatcher, DispatcherBuilder, RunNow, World};
 
 use super::{GameState, StateTransition};
-use components::{register_components, Pos, Sprite};
+use components::{Controlled, register_components, Pos, Sprite};
+use inputstate::InputState;
 use resources::Resources;
 use systems::{InputSystem, SpriteRenderSystem};
 use three_dee::projection_factor;
@@ -34,8 +35,9 @@ impl WormholeState {
 
         world
             .create_entity()
-            .with(Pos::new(1.0, 0.0, 2.0))
-            .with(Sprite(player_sprite));
+            .with(Pos::new(1.0, 0.0, 2.2))
+            .with(Sprite(player_sprite))
+            .with(Controlled);
 
         world
             .create_entity()
@@ -139,15 +141,18 @@ impl GameState for WormholeState {
         Ok(())
     }
 
-    fn key_down_event(&mut self, scancode: Scancode, keycode: Keycode, keymod: Mod, repeat: bool) -> bool {
+    fn key_down_event(&mut self, scancode: Scancode, _keycode: Keycode, _keymod: Mod, _repeat: bool) -> bool {
         if scancode == Scancode::Escape {
             self.quit = true;
         }
-        
+
+        self.world.write_resource::<InputState>().set(scancode);
+
         false
     }
 
-    fn key_up_event(&mut self, scancode: Scancode, keycode: Keycode, keymod: Mod, repeat: bool) -> bool {
+    fn key_up_event(&mut self, scancode: Scancode, _keycode: Keycode, _keymod: Mod, _repeat: bool) -> bool {
+        self.world.write_resource::<InputState>().unset(scancode);
         false
     }
 }
