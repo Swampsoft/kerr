@@ -3,6 +3,7 @@ use std::f32;
 use ggez::{
     graphics::{self, DrawMode, MeshBuilder, Point2, Rect}, Context,
     GameResult,
+    timer,
 };
 
 use sdl2::keyboard::{Keycode, Scancode, Mod};
@@ -10,10 +11,10 @@ use sdl2::keyboard::{Keycode, Scancode, Mod};
 use specs::{Builder, Dispatcher, DispatcherBuilder, RunNow, World};
 
 use super::{GameState, StateTransition};
-use components::{Controlled, register_components, Pos, Sprite};
+use components::{Acc, Controlled, DeltaTime, register_components, Pos, Sprite, Vel};
 use inputstate::InputState;
 use resources::Resources;
-use systems::{InputSystem, SpriteRenderSystem};
+use systems::{InputSystem, KinematicSystem, SpriteRenderSystem};
 use three_dee::projection_factor;
 
 pub struct WormholeState {
@@ -33,39 +34,40 @@ impl WormholeState {
 
         let player_sprite = world.write_resource::<Resources>().add_image(ctx, "/ship_perspective.png")?;
 
+        let asteroid_sprite = world.write_resource::<Resources>().add_image(ctx, "/originals/asteroids/large/a10000.png")?;
+        let quad_sprite = world.write_resource::<Resources>().add_image(ctx, "/40x40.png")?;
+
+        let rocket_sprite = world.write_resource::<Resources>().add_image(ctx, "/rocket.png")?;
+
         world
             .create_entity()
             .with(Pos::new(1.0, 0.0, 2.2))
-            .with(Sprite(player_sprite))
+            .with(Sprite::new_fixed(player_sprite, 0.5, 0.25))
             .with(Controlled);
 
         world
             .create_entity()
-            .with(Pos::new(1.0, 0.1, 3.0))
-            .with(Sprite(player_sprite));
+            .with(Pos::new(1.0, 3.0, 5.0))
+            .with(Vel::new(0.0, 0.1, -0.3))
+            .with(Sprite::new_fixed(asteroid_sprite, 1.0, 1.0));
 
         world
             .create_entity()
-            .with(Pos::new(1.0, 0.2, 4.0))
-            .with(Sprite(player_sprite));
+            .with(Pos::new(1.0, 0.02, 2.2))
+            .with(Vel::new(0.0, 0.0, 0.0))
+            .with(Acc::new(0.0, 0.0, 0.1))
+            .with(Sprite::new_auto(rocket_sprite, 0.5));
 
         world
             .create_entity()
-            .with(Pos::new(1.0, 0.3, 5.0))
-            .with(Sprite(player_sprite));
-
-        world
-            .create_entity()
-            .with(Pos::new(1.0, 0.4, 6.0))
-            .with(Sprite(player_sprite));
-
-        world
-            .create_entity()
-            .with(Pos::new(1.0, 0.5, 7.0))
-            .with(Sprite(player_sprite));
+            .with(Pos::new(1.0, -0.02, 2.2))
+            .with(Vel::new(0.0, 0.0, 0.0))
+            .with(Acc::new(0.0, 0.0, 0.1))
+            .with(Sprite::new_auto(rocket_sprite, 0.5));
 
         let dispatcher = DispatcherBuilder::new()
             .with(InputSystem, "input", &[])
+            .with(KinematicSystem, "kinematics", &["input"])
             .build();
 
         let s = WormholeState {
@@ -87,7 +89,8 @@ impl GameState for WormholeState {
         }
     }
 
-    fn update(&mut self, _ctx: &mut Context) -> GameResult<bool> {
+    fn update(&mut self, ctx: &mut Context) -> GameResult<bool> {
+        self.world.write_resource::<DeltaTime>().0 = timer::duration_to_f64(timer::get_delta(ctx));
         self.dispatcher.dispatch(&self.world.res);
 
         self.z_pos -= 0.01;

@@ -26,7 +26,7 @@ use gamestates::{wormhole::WormholeState, StateManager};
 fn main() -> GameResult<()> {
     let c = conf::Conf {
         window_mode: conf::WindowMode::default().dimensions(1024, 768),
-        window_setup: conf::WindowSetup::default().title("Rock Project"),
+        window_setup: conf::WindowSetup::default().title("Kerr"),
         backend: conf::Backend::OpenGL { major: 3, minor: 2 },
     };
 

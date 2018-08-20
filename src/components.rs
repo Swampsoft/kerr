@@ -5,6 +5,7 @@ use resources::Resources;
 use three_dee::Cylindric;
 
 pub fn register_components(world: &mut World) {
+    world.register::<Acc>();
     world.register::<Controlled>();
     world.register::<Pos>();
     world.register::<Sprite>();
@@ -15,6 +16,7 @@ pub fn register_components(world: &mut World) {
     world.add_resource(Resources::new());
 }
 
+#[derive(Default)]
 pub struct DeltaTime(pub f64);
 
 #[derive(Debug, Component, Default)]
@@ -31,7 +33,17 @@ pub struct Vel(pub Cylindric);
 
 #[derive(Debug, Component)]
 #[storage(VecStorage)]
-pub struct Sprite(pub usize);
+pub struct Acc(pub Cylindric);
+
+#[derive(Debug)]
+pub enum SpriteSize {
+    Auto{scale: f32},
+    Fixed{width: f32, height: f32},
+}
+
+#[derive(Debug, Component)]
+#[storage(VecStorage)]
+pub struct Sprite(pub usize, pub SpriteSize);
 
 impl Pos {
     pub fn new(r: f32, w: f32, z: f32) -> Self {
@@ -42,5 +54,21 @@ impl Pos {
 impl Vel {
     pub fn new(r: f32, w: f32, z: f32) -> Self {
         Vel(Cylindric::new(r, w, z))
+    }
+}
+
+impl Acc {
+    pub fn new(r: f32, w: f32, z: f32) -> Self {
+        Acc(Cylindric::new(r, w, z))
+    }
+}
+
+impl Sprite {
+    pub fn new_auto(id: usize, scale: f32) -> Self {
+        Sprite(id, SpriteSize::Auto{scale})
+    }
+
+    pub fn new_fixed(id: usize, width: f32, height: f32) -> Self {
+        Sprite(id, SpriteSize::Fixed{width, height})
     }
 }
