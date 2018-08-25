@@ -1,4 +1,5 @@
 use std::f32;
+use std::time::Duration;
 
 use ggez::{
     graphics::{self, DrawMode, MeshBuilder, Point2, Rect}, Context,
@@ -23,7 +24,7 @@ pub struct WormholeState {
 
     quit: bool,
 
-    update_time_remaining: f64,
+    update_time_remaining: Duration,
 
     z_pos: f32,
 }
@@ -34,7 +35,7 @@ impl WormholeState {
 
         register_components(&mut world);
 
-        world.write_resource::<DeltaTime>().0 = 1.0 / 60.0;  // update at 30 fps
+        world.write_resource::<DeltaTime>().0 = Duration::from_nanos(1_000_000_000 / 60);  // update at 60 fps
 
         let player_sprite = world.write_resource::<Resources>().add_image(ctx, "/ship_perspective.png")?;
 
@@ -82,7 +83,7 @@ impl WormholeState {
             world,
             dispatcher,
             z_pos: 0.0,
-            update_time_remaining: 0.0,
+            update_time_remaining: Duration::from_secs(0),
             quit: false,
         };
         Ok(s)
@@ -101,8 +102,8 @@ impl GameState for WormholeState {
     fn update(&mut self, ctx: &mut Context) -> GameResult<bool> {
         let update_time = self.world.read_resource::<DeltaTime>().0;
 
-        self.update_time_remaining += timer::duration_to_f64(timer::get_delta(ctx));
-        while self.update_time_remaining > 0.0 {
+        self.update_time_remaining += timer::get_delta(ctx);
+        while self.update_time_remaining >= update_time {
 
             //println!("{:?}", 1.0 / timer::duration_to_f64(timer::get_average_delta(ctx)));
 
@@ -111,7 +112,7 @@ impl GameState for WormholeState {
             self.dispatcher.dispatch(&self.world.res);
             self.world.maintain();
 
-            self.z_pos -= (1.0 * update_time) as f32;
+            self.z_pos -= (1.0 * timer::duration_to_f64(update_time)) as f32;
             while self.z_pos <= 0.0 {
                 self.z_pos += 2.0;
             }

@@ -1,3 +1,5 @@
+use std::time::Duration;
+
 use specs::prelude::*;
 
 use inputstate::InputState;
@@ -11,13 +13,13 @@ pub fn register_components(world: &mut World) {
     world.register::<Sprite>();
     world.register::<Vel>();
 
-    world.add_resource(DeltaTime(0.0));
+    world.add_resource(DeltaTime(Duration::from_secs(0)));
     world.add_resource(InputState::new());
     world.add_resource(Resources::new());
 }
 
 #[derive(Default)]
-pub struct DeltaTime(pub f64);
+pub struct DeltaTime(pub Duration);
 
 #[derive(Debug, Component, Default)]
 #[storage(NullStorage)]

@@ -2,6 +2,7 @@ use std::f32::consts::PI;
 
 use ggez::{
     graphics::{self, DrawParam, Drawable, Point2}, Context,
+    timer::duration_to_f64,
 };
 
 use specs::prelude::*;
@@ -138,7 +139,7 @@ impl<'a> System<'a> for KinematicSystem {
     type SystemData = (Read<'a, DeltaTime>, ReadStorage<'a, Acc>, WriteStorage<'a, Vel>, WriteStorage<'a, Pos>);
 
     fn run(&mut self, (dt, acc, mut vel, mut pos): Self::SystemData) {
-        let dt = dt.0 as f32;
+        let dt = duration_to_f64(dt.0) as f32;
 
         for (a, v) in (&acc, &mut vel).join() {
             v.0.r += a.0.r * dt;
