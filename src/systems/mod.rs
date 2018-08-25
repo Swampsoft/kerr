@@ -1,4 +1,5 @@
 use std::f32::consts::PI;
+use std::time::Duration;
 
 use ggez::{
     graphics::{self, DrawParam, Drawable, Point2}, Context,
@@ -7,7 +8,7 @@ use ggez::{
 
 use specs::prelude::*;
 
-use components::{Acc, Controlled, DeltaTime, Pos, Vel, Sprite, SpriteSize};
+use components::{Acc, Controlled, DeltaTime, Pos, Vel, RocketLauncher, Sprite, SpriteSize};
 use inputstate::{Input, InputState};
 use resources::Resources;
 use three_dee::projection;
@@ -87,23 +88,13 @@ impl<'a, 'c> System<'a> for RectangleRenderSystem<'c> {
 pub struct InputSystem;
 
 impl<'a> System<'a> for InputSystem {
-    type SystemData = (Read<'a, InputState>, ReadStorage<'a, Controlled>, WriteStorage<'a, Pos>, Entities<'a>, Read<'a, LazyUpdate>);
+    type SystemData = (Read<'a, InputState>, ReadStorage<'a, Controlled>, WriteStorage<'a, RocketLauncher>, WriteStorage<'a, Pos>, Entities<'a>, Read<'a, LazyUpdate>);
 
-    fn run(&mut self, (inp, ctr, mut pos, ent, updater): Self::SystemData) {
+    fn run(&mut self, (inp, ctr, mut launcher, mut pos, ent, updater): Self::SystemData) {
         for (c, p) in (&ctr, &mut pos).join() {
             p.0.w = p.0.w % 1.0;
             if p.0.w < 0.0 {
                 p.0.w = 1.0 + p.0.w;
-            }
-
-            if inp.is_set(Input::Fire) {
-                println!("*");
-                let e = ent.create();
-
-                updater.insert(e, Pos::new(1.0, -0.02, 2.2));
-                updater.insert(e, Vel::new(0.0, 0.0, 0.0));
-                updater.insert(e, Acc::new(0.0, 0.0, 0.5));
-                updater.insert(e, Sprite::new_auto(3, 0.5));
             }
 
             let mut delta = 0;
@@ -129,6 +120,49 @@ impl<'a> System<'a> for InputSystem {
             let mut direction = distance.min(0.01).max(-0.01);
 
             p.0.w += direction;
+        }
+
+        for (c, l) in (&ctr, &mut launcher).join() {
+            if inp.is_set(Input::Fire) {
+                match l {
+                    RocketLauncher::Ready => *l = RocketLauncher::Fire,
+                    RocketLauncher::Recharge(_) => {},
+                    RocketLauncher::Fire => {}
+                }
+            }
+        }
+    }
+}
+
+pub struct RocketLauncherSystem;
+
+impl<'a> System<'a> for RocketLauncherSystem {
+    type SystemData = (Read<'a, DeltaTime>, WriteStorage<'a, RocketLauncher>, ReadStorage<'a, Pos>, Entities<'a>, Read<'a, LazyUpdate>);
+
+    fn run(&mut self, (dt, mut launcher, pos, ent, updater): Self::SystemData) {
+        for (l, p) in (&mut launcher, &pos).join() {
+            *l = match l {
+                RocketLauncher::Ready => RocketLauncher::Ready,
+                RocketLauncher::Recharge(d) => {
+                    if *d == Duration::from_secs(0) {
+                        RocketLauncher::Ready
+                    } else if *d < dt.0 {
+                        RocketLauncher::Recharge(Duration::from_secs(0))
+                    } else {
+                        RocketLauncher::Recharge(*d - dt.0)
+                    }
+                }
+                RocketLauncher::Fire => {
+                    let e = ent.create();
+
+                    updater.insert(e, *p);
+                    updater.insert(e, Vel::new(0.0, 0.0, 0.0));
+                    updater.insert(e, Acc::new(0.0, 0.0, 0.5));
+                    updater.insert(e, Sprite::new_auto(3, 0.5));
+
+                    RocketLauncher::Recharge(Duration::from_millis(500))
+                }
+            };
         }
     }
 }

@@ -10,6 +10,7 @@ pub fn register_components(world: &mut World) {
     world.register::<Acc>();
     world.register::<Controlled>();
     world.register::<Pos>();
+    world.register::<RocketLauncher>();
     world.register::<Sprite>();
     world.register::<Vel>();
 
@@ -25,17 +26,35 @@ pub struct DeltaTime(pub Duration);
 #[storage(NullStorage)]
 pub struct Controlled;
 
-#[derive(Debug, Component)]
+#[derive(Debug, Copy, Clone, Component)]
 #[storage(VecStorage)]
 pub struct Pos(pub Cylindric);
+
+impl Pos {
+    pub fn new(r: f32, w: f32, z: f32) -> Self {
+        Pos(Cylindric::new(r, w, z))
+    }
+}
 
 #[derive(Debug, Component)]
 #[storage(VecStorage)]
 pub struct Vel(pub Cylindric);
 
+impl Vel {
+    pub fn new(r: f32, w: f32, z: f32) -> Self {
+        Vel(Cylindric::new(r, w, z))
+    }
+}
+
 #[derive(Debug, Component)]
 #[storage(VecStorage)]
 pub struct Acc(pub Cylindric);
+
+impl Acc {
+    pub fn new(r: f32, w: f32, z: f32) -> Self {
+        Acc(Cylindric::new(r, w, z))
+    }
+}
 
 #[derive(Debug)]
 pub enum SpriteSize {
@@ -47,24 +66,6 @@ pub enum SpriteSize {
 #[storage(VecStorage)]
 pub struct Sprite(pub usize, pub SpriteSize);
 
-impl Pos {
-    pub fn new(r: f32, w: f32, z: f32) -> Self {
-        Pos(Cylindric::new(r, w, z))
-    }
-}
-
-impl Vel {
-    pub fn new(r: f32, w: f32, z: f32) -> Self {
-        Vel(Cylindric::new(r, w, z))
-    }
-}
-
-impl Acc {
-    pub fn new(r: f32, w: f32, z: f32) -> Self {
-        Acc(Cylindric::new(r, w, z))
-    }
-}
-
 impl Sprite {
     pub fn new_auto(id: usize, scale: f32) -> Self {
         Sprite(id, SpriteSize::Auto{scale})
@@ -73,4 +74,11 @@ impl Sprite {
     pub fn new_fixed(id: usize, width: f32, height: f32) -> Self {
         Sprite(id, SpriteSize::Fixed{width, height})
     }
+}
+
+#[derive(Debug, Component)]
+pub enum RocketLauncher {
+    Ready,
+    Fire,
+    Recharge(Duration),
 }

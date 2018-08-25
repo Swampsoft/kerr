@@ -12,10 +12,10 @@ use sdl2::keyboard::{Keycode, Scancode, Mod};
 use specs::{Builder, Dispatcher, DispatcherBuilder, RunNow, World};
 
 use super::{GameState, StateTransition};
-use components::{Acc, Controlled, DeltaTime, register_components, Pos, Sprite, Vel};
+use components::{Acc, Controlled, DeltaTime, register_components, Pos, RocketLauncher, Sprite, Vel};
 use inputstate::InputState;
 use resources::Resources;
-use systems::{InputSystem, KinematicSystem, SpriteRenderSystem};
+use systems::{InputSystem, KinematicSystem, RocketLauncherSystem, SpriteRenderSystem};
 use three_dee::projection_factor;
 
 pub struct WormholeState {
@@ -48,6 +48,7 @@ impl WormholeState {
             .create_entity()
             .with(Pos::new(1.0, 0.0, 2.2))
             .with(Sprite::new_fixed(player_sprite, 0.5, 0.25))
+            .with(RocketLauncher::Ready)
             .with(Controlled)
             .build();
 
@@ -76,6 +77,7 @@ impl WormholeState {
 
         let dispatcher = DispatcherBuilder::new()
             .with(InputSystem, "input", &[])
+            .with(RocketLauncherSystem, "rocket_launcher", &["input"])
             .with(KinematicSystem, "kinematics", &["input"])
             .build();
 
