@@ -23,6 +23,8 @@ pub struct WormholeState {
 
     quit: bool,
 
+    update_time_remaining: f64,
+
     z_pos: f32,
 }
 
@@ -31,6 +33,8 @@ impl WormholeState {
         let mut world = World::new();
 
         register_components(&mut world);
+
+        world.write_resource::<DeltaTime>().0 = 1.0 / 60.0;  // update at 30 fps
 
         let player_sprite = world.write_resource::<Resources>().add_image(ctx, "/ship_perspective.png")?;
 
@@ -55,14 +59,14 @@ impl WormholeState {
             .create_entity()
             .with(Pos::new(1.0, 0.02, 2.2))
             .with(Vel::new(0.0, 0.0, 0.0))
-            .with(Acc::new(0.0, 0.0, 0.1))
+            .with(Acc::new(0.0, 0.0, 0.5))
             .with(Sprite::new_auto(rocket_sprite, 0.5));
 
         world
             .create_entity()
             .with(Pos::new(1.0, -0.02, 2.2))
             .with(Vel::new(0.0, 0.0, 0.0))
-            .with(Acc::new(0.0, 0.0, 0.1))
+            .with(Acc::new(0.0, 0.0, 0.5))
             .with(Sprite::new_auto(rocket_sprite, 0.5));
 
         let dispatcher = DispatcherBuilder::new()
@@ -74,6 +78,7 @@ impl WormholeState {
             world,
             dispatcher,
             z_pos: 0.0,
+            update_time_remaining: 0.0,
             quit: false,
         };
         Ok(s)
@@ -90,13 +95,23 @@ impl GameState for WormholeState {
     }
 
     fn update(&mut self, ctx: &mut Context) -> GameResult<bool> {
-        self.world.write_resource::<DeltaTime>().0 = timer::duration_to_f64(timer::get_delta(ctx));
-        self.dispatcher.dispatch(&self.world.res);
+        let update_time = self.world.read_resource::<DeltaTime>().0;
 
-        self.z_pos -= 0.01;
-        while self.z_pos <= 0.0 {
-            self.z_pos += 2.0;
+        self.update_time_remaining += timer::duration_to_f64(timer::get_delta(ctx));
+        while self.update_time_remaining > 0.0 {
+
+            println!("{:?}", 1.0 / timer::duration_to_f64(timer::get_average_delta(ctx)));
+
+            self.update_time_remaining -= update_time;
+
+            self.dispatcher.dispatch(&self.world.res);
+
+            self.z_pos -= (1.0 * update_time) as f32;
+            while self.z_pos <= 0.0 {
+                self.z_pos += 2.0;
+            }
         }
+
         Ok(false)
     }
 
