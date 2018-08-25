@@ -47,27 +47,31 @@ impl WormholeState {
             .create_entity()
             .with(Pos::new(1.0, 0.0, 2.2))
             .with(Sprite::new_fixed(player_sprite, 0.5, 0.25))
-            .with(Controlled);
+            .with(Controlled)
+            .build();
 
         world
             .create_entity()
             .with(Pos::new(1.0, 3.0, 5.0))
             .with(Vel::new(0.0, 0.1, -0.3))
-            .with(Sprite::new_fixed(asteroid_sprite, 1.0, 1.0));
+            .with(Sprite::new_fixed(asteroid_sprite, 1.0, 1.0))
+            .build();
 
         world
             .create_entity()
             .with(Pos::new(1.0, 0.02, 2.2))
             .with(Vel::new(0.0, 0.0, 0.0))
             .with(Acc::new(0.0, 0.0, 0.5))
-            .with(Sprite::new_auto(rocket_sprite, 0.5));
+            .with(Sprite::new_auto(rocket_sprite, 0.5))
+            .build();
 
         world
             .create_entity()
             .with(Pos::new(1.0, -0.02, 2.2))
             .with(Vel::new(0.0, 0.0, 0.0))
             .with(Acc::new(0.0, 0.0, 0.5))
-            .with(Sprite::new_auto(rocket_sprite, 0.5));
+            .with(Sprite::new_auto(rocket_sprite, 0.5))
+            .build();
 
         let dispatcher = DispatcherBuilder::new()
             .with(InputSystem, "input", &[])
@@ -100,11 +104,12 @@ impl GameState for WormholeState {
         self.update_time_remaining += timer::duration_to_f64(timer::get_delta(ctx));
         while self.update_time_remaining > 0.0 {
 
-            println!("{:?}", 1.0 / timer::duration_to_f64(timer::get_average_delta(ctx)));
+            //println!("{:?}", 1.0 / timer::duration_to_f64(timer::get_average_delta(ctx)));
 
             self.update_time_remaining -= update_time;
 
             self.dispatcher.dispatch(&self.world.res);
+            self.world.maintain();
 
             self.z_pos -= (1.0 * update_time) as f32;
             while self.z_pos <= 0.0 {

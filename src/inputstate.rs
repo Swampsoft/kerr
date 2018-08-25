@@ -13,6 +13,8 @@ pub enum Input {
     Down,
     Left,
     Right,
+
+    Fire,
 }
 
 pub struct InputState {
@@ -32,6 +34,8 @@ impl Default for InputState {
         mapping.insert(Scancode::S, Input::Down);
         mapping.insert(Scancode::A, Input::Left);
         mapping.insert(Scancode::D, Input::Right);
+
+        mapping.insert(Scancode::Space, Input::Fire);
 
         InputState {
             inputs: [false; 256],

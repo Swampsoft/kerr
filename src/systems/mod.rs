@@ -86,13 +86,23 @@ impl<'a, 'c> System<'a> for RectangleRenderSystem<'c> {
 pub struct InputSystem;
 
 impl<'a> System<'a> for InputSystem {
-    type SystemData = (Read<'a, InputState>, ReadStorage<'a, Controlled>, WriteStorage<'a, Pos>);
+    type SystemData = (Read<'a, InputState>, ReadStorage<'a, Controlled>, WriteStorage<'a, Pos>, Entities<'a>, Read<'a, LazyUpdate>);
 
-    fn run(&mut self, (inp, ctr, mut pos): Self::SystemData) {
+    fn run(&mut self, (inp, ctr, mut pos, ent, updater): Self::SystemData) {
         for (c, p) in (&ctr, &mut pos).join() {
             p.0.w = p.0.w % 1.0;
             if p.0.w < 0.0 {
                 p.0.w = 1.0 + p.0.w;
+            }
+
+            if inp.is_set(Input::Fire) {
+                println!("*");
+                let e = ent.create();
+
+                updater.insert(e, Pos::new(1.0, -0.02, 2.2));
+                updater.insert(e, Vel::new(0.0, 0.0, 0.0));
+                updater.insert(e, Acc::new(0.0, 0.0, 0.5));
+                updater.insert(e, Sprite::new_auto(3, 0.5));
             }
 
             let mut delta = 0;
