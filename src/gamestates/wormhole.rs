@@ -1,31 +1,33 @@
 use std::f32;
 use std::time::Duration;
 
+use ambisonic::{Ambisonic, AmbisonicBuilder};
+
 use ggez::{
     graphics::{self, DrawMode, MeshBuilder, Point2, Rect}, Context,
     GameResult,
     timer,
 };
 
+use rodio;
+
 use sdl2::keyboard::{Keycode, Scancode, Mod};
 
 use specs::{Builder, Dispatcher, DispatcherBuilder, RunNow, World};
 
 use super::{GameState, StateTransition};
-use components::{Acc, Controlled, DeltaTime, register_components, Pos, RocketLauncher, Sprite, Vel};
+use components::{Acc, Controlled, DeltaTime, register_components, Pos, RocketLauncher, SoundEmitter, Sprite, Vel};
 use inputstate::InputState;
 use resources::Resources;
-use systems::{InputSystem, KinematicSystem, RocketLauncherSystem, SpriteRenderSystem};
+use systems::{InputSystem, KinematicSystem, RocketLauncherSystem, SpatialAudioSystem, SpriteRenderSystem};
 use three_dee::projection_factor;
 
 pub struct WormholeState {
     world: World,
+    audio_context: Ambisonic,
     dispatcher: Dispatcher<'static, 'static>,
-
     quit: bool,
-
     update_time_remaining: Duration,
-
     z_pos: f32,
 }
 
@@ -44,11 +46,18 @@ impl WormholeState {
 
         let rocket_sprite = world.write_resource::<Resources>().add_image(ctx, "/rocket.png")?;
 
+        let audio_context = AmbisonicBuilder::new().build();
+
+        let se = SoundEmitter::new(&audio_context);
+
+        se.mixer_controller.add(rodio::source::SineWave::new(440));
+
         world
             .create_entity()
             .with(Pos::new(1.0, 0.0, 2.2))
             .with(Sprite::new_fixed(player_sprite, 0.5, 0.25))
             .with(RocketLauncher::Ready)
+            .with(se)
             .with(Controlled)
             .build();
 
@@ -79,10 +88,12 @@ impl WormholeState {
             .with(InputSystem, "input", &[])
             .with(RocketLauncherSystem, "rocket_launcher", &["input"])
             .with(KinematicSystem, "kinematics", &["input"])
+            .with(SpatialAudioSystem, "spatial audio", &["kinematics"])
             .build();
 
         let s = WormholeState {
             world,
+            audio_context,
             dispatcher,
             z_pos: 0.0,
             update_time_remaining: Duration::from_secs(0),

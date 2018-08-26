@@ -1,12 +1,15 @@
 use std::time::Duration;
 
+extern crate ambisonic;
 extern crate ggez;
+extern crate rodio;
 extern crate sdl2;
 extern crate specs;
 #[macro_use]
 extern crate specs_derive;
 extern crate steamy_controller;
 
+mod audio;
 mod components;
 mod gamestates;
 mod inputstate;

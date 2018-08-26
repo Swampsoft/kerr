@@ -2,6 +2,7 @@ use std::time::Duration;
 
 use specs::prelude::*;
 
+pub use audio::SoundEmitter;
 use inputstate::InputState;
 use resources::Resources;
 use three_dee::Cylindric;
@@ -11,6 +12,7 @@ pub fn register_components(world: &mut World) {
     world.register::<Controlled>();
     world.register::<Pos>();
     world.register::<RocketLauncher>();
+    world.register::<SoundEmitter>();
     world.register::<Sprite>();
     world.register::<Vel>();
 

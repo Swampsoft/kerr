@@ -8,10 +8,10 @@ use ggez::{
 
 use specs::prelude::*;
 
-use components::{Acc, Controlled, DeltaTime, Pos, Vel, RocketLauncher, Sprite, SpriteSize};
+use components::{Acc, Controlled, DeltaTime, Pos, Vel, RocketLauncher, SoundEmitter, Sprite, SpriteSize};
 use inputstate::{Input, InputState};
 use resources::Resources;
-use three_dee::projection;
+use three_dee::{cylindric_pos_to_cartesian, cylindric_vel_to_cartesian, projection};
 use utils::fix_sprite;
 
 pub struct SpriteRenderSystem<'c> {
@@ -88,9 +88,9 @@ impl<'a, 'c> System<'a> for RectangleRenderSystem<'c> {
 pub struct InputSystem;
 
 impl<'a> System<'a> for InputSystem {
-    type SystemData = (Read<'a, InputState>, ReadStorage<'a, Controlled>, WriteStorage<'a, RocketLauncher>, WriteStorage<'a, Pos>, Entities<'a>, Read<'a, LazyUpdate>);
+    type SystemData = (Read<'a, InputState>, ReadStorage<'a, Controlled>, WriteStorage<'a, RocketLauncher>, WriteStorage<'a, Pos>);
 
-    fn run(&mut self, (inp, ctr, mut launcher, mut pos, ent, updater): Self::SystemData) {
+    fn run(&mut self, (inp, ctr, mut launcher, mut pos): Self::SystemData) {
         for (c, p) in (&ctr, &mut pos).join() {
             p.0.w = p.0.w % 1.0;
             if p.0.w < 0.0 {
@@ -190,6 +190,28 @@ impl<'a> System<'a> for KinematicSystem {
             if p.0.w < 0.0 {
                 p.0.w = 1.0 + p.0.w;
             }
+        }
+    }
+}
+
+pub struct SpatialAudioSystem;
+
+
+impl<'a> System<'a> for SpatialAudioSystem {
+    type SystemData = (ReadStorage<'a, Vel>, ReadStorage<'a, Pos>, WriteStorage<'a, SoundEmitter>);
+
+    fn run(&mut self, (vel, pos, mut emitter): Self::SystemData) {
+        for (p, e) in (&pos, &mut emitter).join() {
+            let mut tmp: [f32; 3] = cylindric_pos_to_cartesian(p.0).into();
+            tmp[2] -= 2.2;
+            println!("{:?}", tmp);
+            e.spatial_controller.adjust_position(tmp);
+        }
+
+        for (v, p, e) in (&vel, &pos, &mut emitter).join() {
+            let tmp = cylindric_vel_to_cartesian(v.0, p.0).into();
+            println!("{:?}", tmp);
+            e.spatial_controller.set_velocity(tmp)
         }
     }
 }
