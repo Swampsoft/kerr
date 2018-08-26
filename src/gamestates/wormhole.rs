@@ -9,7 +9,7 @@ use ggez::{
     timer,
 };
 
-use rodio;
+use rodio::{self, Source};
 
 use sdl2::keyboard::{Keycode, Scancode, Mod};
 
@@ -49,15 +49,23 @@ impl WormholeState {
         let audio_context = AmbisonicBuilder::new().build();
 
         let se = SoundEmitter::new(&audio_context);
+        se.mixer_controller.add(rodio::source::SineWave::new(40));
+        se.mixer_controller.add(rodio::source::SineWave::new(160).amplify(0.1));
 
-        se.mixer_controller.add(rodio::source::SineWave::new(440));
+        world.create_entity()
+            .with(Pos::new(0.2, 0.25, 100.0))
+            .with(Vel::new(0.0, 0.0, -10.0))
+            .with(Sprite::new_auto(asteroid_sprite, 1.0))
+            .with(se)
+            .build();
 
         world
             .create_entity()
             .with(Pos::new(1.0, 0.0, 2.2))
+            .with(Vel::new(0.0, 0.0, 0.0))
             .with(Sprite::new_fixed(player_sprite, 0.5, 0.25))
             .with(RocketLauncher::Ready)
-            .with(se)
+            //.with(se)
             .with(Controlled)
             .build();
 

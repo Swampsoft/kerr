@@ -29,6 +29,10 @@ impl<'a, 'c> System<'a> for SpriteRenderSystem<'c> {
 
     fn run(&mut self, (res, pos, spr): Self::SystemData) {
         for (p, s) in (&pos, &spr).join() {
+            if p.0.z < 0.0 {
+                continue
+            }
+
             let a = p.0.w * 2.0 * PI;
             let screen_pos = projection(p.0);
 
@@ -88,10 +92,12 @@ impl<'a, 'c> System<'a> for RectangleRenderSystem<'c> {
 pub struct InputSystem;
 
 impl<'a> System<'a> for InputSystem {
-    type SystemData = (Read<'a, InputState>, ReadStorage<'a, Controlled>, WriteStorage<'a, RocketLauncher>, WriteStorage<'a, Pos>);
+    type SystemData = (Read<'a, DeltaTime>, Read<'a, InputState>, ReadStorage<'a, Controlled>, WriteStorage<'a, RocketLauncher>, WriteStorage<'a, Pos>, WriteStorage<'a, Vel>);
 
-    fn run(&mut self, (inp, ctr, mut launcher, mut pos): Self::SystemData) {
-        for (c, p) in (&ctr, &mut pos).join() {
+    fn run(&mut self, (dt, inp, ctr, mut launcher, mut pos, mut vel): Self::SystemData) {
+        let dt = duration_to_f64(dt.0) as f32;
+
+        for (c, mut p, mut v) in (&ctr, &mut pos, &mut vel).join() {
             p.0.w = p.0.w % 1.0;
             if p.0.w < 0.0 {
                 p.0.w = 1.0 + p.0.w;
@@ -108,7 +114,10 @@ impl<'a> System<'a> for InputSystem {
                 (true, false, false, true) => 0.875,
                 (false, true, true, false) => 0.375,
                 (false, true, false, true) => 0.125,
-                _ => continue,
+                _ => {
+                    v.0.w = 0.0;
+                    continue
+                },
             };
 
             let mut distance = target - p.0.w;
@@ -119,7 +128,8 @@ impl<'a> System<'a> for InputSystem {
 
             let mut direction = distance.min(0.01).max(-0.01);
 
-            p.0.w += direction;
+            //p.0.w += direction;
+            v.0.w = direction / dt;
         }
 
         for (c, l) in (&ctr, &mut launcher).join() {
@@ -175,13 +185,13 @@ impl<'a> System<'a> for KinematicSystem {
     fn run(&mut self, (dt, acc, mut vel, mut pos): Self::SystemData) {
         let dt = duration_to_f64(dt.0) as f32;
 
-        for (a, v) in (&acc, &mut vel).join() {
+        for (a, mut v) in (&acc, &mut vel).join() {
             v.0.r += a.0.r * dt;
             v.0.w += a.0.w * dt;
             v.0.z += a.0.z * dt;
         }
 
-        for (v, p) in (&vel, &mut pos).join() {
+        for (v, mut p) in (&vel, &mut pos).join() {
             p.0.r += v.0.r * dt;
             p.0.w += v.0.w * dt;
             p.0.z += v.0.z * dt;
@@ -202,16 +212,15 @@ impl<'a> System<'a> for SpatialAudioSystem {
 
     fn run(&mut self, (vel, pos, mut emitter): Self::SystemData) {
         for (p, e) in (&pos, &mut emitter).join() {
-            let mut tmp: [f32; 3] = cylindric_pos_to_cartesian(p.0).into();
-            tmp[2] -= 2.2;
-            println!("{:?}", tmp);
-            e.spatial_controller.adjust_position(tmp);
+            let tmp = cylindric_pos_to_cartesian(p.0);
+            // in Ambisonic z points up, but our z points into the screen
+            e.spatial_controller.adjust_position([tmp.x, tmp.z, tmp.y]);
         }
 
         for (v, p, e) in (&vel, &pos, &mut emitter).join() {
-            let tmp = cylindric_vel_to_cartesian(v.0, p.0).into();
-            println!("{:?}", tmp);
-            e.spatial_controller.set_velocity(tmp)
+            let tmp = cylindric_vel_to_cartesian(v.0, p.0);
+            // in Ambisonic z points up, but our z points into the screen
+            e.spatial_controller.set_velocity([tmp.x, tmp.z, tmp.y])
         }
     }
 }
