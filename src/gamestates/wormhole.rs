@@ -16,10 +16,11 @@ use sdl2::keyboard::{Keycode, Scancode, Mod};
 use specs::{Builder, Dispatcher, DispatcherBuilder, RunNow, World};
 
 use super::{GameState, StateTransition};
+use audio::Audio;
 use components::{Acc, Controlled, DeltaTime, register_components, Pos, RocketLauncher, SoundEmitter, Sprite, Vel};
 use inputstate::InputState;
 use resources::Resources;
-use systems::{InputSystem, KinematicSystem, RocketLauncherSystem, SpatialAudioSystem, SpriteRenderSystem};
+use systems::{InputSystem, KinematicSystem, RocketLauncherSystem, RocketProjectileSystem, SpatialAudioSystem, SpriteRenderSystem};
 use three_dee::projection_factor;
 
 pub struct WormholeState {
@@ -45,14 +46,14 @@ impl WormholeState {
 
         let rocket_sprite = world.write_resource::<Resources>().add_image(ctx, "/rocket.png")?;
 
-        let se = SoundEmitter::new(&world.read_resource::<Ambisonic>());
-        se.mixer_controller.add(Noise::new(48000));
+        //let se = SoundEmitter::new(&world.read_resource::<Audio>().ambisonic);
+        //se.mixer_controller.add(Noise::new(48000));
 
         world.create_entity()
             .with(Pos::new(0.2, 0.25, 100.0))
             .with(Vel::new(0.0, 0.0, -10.0))
             .with(Sprite::new_auto(asteroid_sprite, 1.0))
-            .with(se)
+            //.with(se)
             .build();
 
         world
@@ -72,7 +73,7 @@ impl WormholeState {
             .with(Sprite::new_fixed(asteroid_sprite, 1.0, 1.0))
             .build();
 
-        world
+        /*world
             .create_entity()
             .with(Pos::new(1.0, 0.02, 2.2))
             .with(Vel::new(0.0, 0.0, 0.0))
@@ -86,11 +87,12 @@ impl WormholeState {
             .with(Vel::new(0.0, 0.0, 0.0))
             .with(Acc::new(0.0, 0.0, 0.5))
             .with(Sprite::new_auto(rocket_sprite, 0.5))
-            .build();
+            .build();*/
 
         let dispatcher = DispatcherBuilder::new()
             .with(InputSystem, "input", &[])
             .with(RocketLauncherSystem, "rocket_launcher", &["input"])
+            .with(RocketProjectileSystem, "rocket projectile", &[])
             .with(KinematicSystem, "kinematics", &["input"])
             .with(SpatialAudioSystem, "spatial audio", &["kinematics"])
             .build();
@@ -156,7 +158,7 @@ impl GameState for WormholeState {
             );
         }
 
-        let p1 = projection_factor(self.z_pos * 10.0 );
+        /*let p1 = projection_factor(self.z_pos * 10.0 );
         let p2 = projection_factor(self.z_pos * 10.0 + 1.0);
 
         mb.line(
@@ -166,7 +168,7 @@ impl GameState for WormholeState {
         mb.line(
             &[Point2::new(0.8, 0.7) * p1, Point2::new(0.8, 0.7) * p2],
             0.02 * p1,
-        );
+        );*/
 
         let mesh = mb.build(ctx)?;
 

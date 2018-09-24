@@ -4,7 +4,7 @@ use ambisonic::AmbisonicBuilder;
 
 use specs::prelude::*;
 
-pub use audio::SoundEmitter;
+pub use audio::{Audio, SoundEmitter};
 use inputstate::InputState;
 use resources::Resources;
 use three_dee::Cylindric;
@@ -14,6 +14,7 @@ pub fn register_components(world: &mut World) {
     world.register::<Controlled>();
     world.register::<Pos>();
     world.register::<RocketLauncher>();
+    world.register::<RocketProjectile>();
     world.register::<SoundEmitter>();
     world.register::<Sprite>();
     world.register::<Vel>();
@@ -21,7 +22,7 @@ pub fn register_components(world: &mut World) {
     world.add_resource(DeltaTime(Duration::from_secs(0)));
     world.add_resource(InputState::new());
     world.add_resource(Resources::new());
-    world.add_resource(AmbisonicBuilder::new().build())
+    world.add_resource(Audio::default());
 }
 
 #[derive(Default)]
@@ -86,4 +87,11 @@ pub enum RocketLauncher {
     Ready,
     Fire,
     Recharge(Duration),
+}
+
+#[derive(Debug, Component)]
+pub enum RocketProjectile {
+    Launching(f32, Duration),
+    Accelerating(Duration),
+    Flying(Duration),
 }

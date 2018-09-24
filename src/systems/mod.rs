@@ -1,14 +1,19 @@
 use std::f32::consts::PI;
 use std::time::Duration;
 
+use ambisonic::sources::Noise;
+
 use ggez::{
     graphics::{self, DrawParam, Drawable, Point2}, Context,
     timer::duration_to_f64,
 };
 
+use rodio::Source;
+
 use specs::prelude::*;
 
-use components::{Acc, Controlled, DeltaTime, Pos, Vel, RocketLauncher, SoundEmitter, Sprite, SpriteSize};
+use audio::Audio;
+use components::{Acc, Controlled, DeltaTime, Pos, Vel, RocketLauncher, RocketProjectile, SoundEmitter, Sprite, SpriteSize};
 use inputstate::{Input, InputState};
 use resources::Resources;
 use three_dee::{cylindric_pos_to_cartesian, cylindric_vel_to_cartesian, projection};
@@ -147,9 +152,9 @@ impl<'a> System<'a> for InputSystem {
 pub struct RocketLauncherSystem;
 
 impl<'a> System<'a> for RocketLauncherSystem {
-    type SystemData = (Read<'a, DeltaTime>, WriteStorage<'a, RocketLauncher>, ReadStorage<'a, Pos>, Entities<'a>, Read<'a, LazyUpdate>);
+    type SystemData = (Read<'a, DeltaTime>, Read<'a, Audio>, WriteStorage<'a, RocketLauncher>, ReadStorage<'a, Pos>, Entities<'a>, Read<'a, LazyUpdate>);
 
-    fn run(&mut self, (dt, mut launcher, pos, ent, updater): Self::SystemData) {
+    fn run(&mut self, (dt, audio, mut launcher, pos, ents, updater): Self::SystemData) {
         for (l, p) in (&mut launcher, &pos).join() {
             *l = match l {
                 RocketLauncher::Ready => RocketLauncher::Ready,
@@ -163,16 +168,61 @@ impl<'a> System<'a> for RocketLauncherSystem {
                     }
                 }
                 RocketLauncher::Fire => {
-                    let e = ent.create();
 
-                    updater.insert(e, *p);
-                    updater.insert(e, Vel::new(0.0, 0.0, 0.0));
-                    updater.insert(e, Acc::new(0.0, 0.0, 0.5));
-                    updater.insert(e, Sprite::new_auto(3, 0.5));
+                    let se = SoundEmitter::new(&audio.ambisonic);
+                    se.mixer_controller.add(Noise::new(48000).amplify(0.1));
 
-                    RocketLauncher::Recharge(Duration::from_millis(500))
+                    let e = updater.create_entity(&ents)
+                        .with(*p)
+                        .with(Vel::new(0.0, 0.0, 0.5))
+                        .with(Acc::new(0.0, 0.0, 0.0))
+                        .with(Sprite::new_auto(3, 0.5))
+                        .with(RocketProjectile::Launching(25.0, Duration::from_millis(200)))
+                        .with(se)
+                        .build();
+
+                    RocketLauncher::Recharge(Duration::from_millis(350))
                 }
             };
+        }
+    }
+}
+
+pub struct RocketProjectileSystem;
+
+impl<'a> System<'a> for RocketProjectileSystem {
+    type SystemData = (Read<'a, DeltaTime>, WriteStorage<'a, RocketProjectile>, WriteStorage<'a, Acc>, WriteStorage<'a, SoundEmitter>, Entities<'a>, Read<'a, LazyUpdate>);
+
+    fn run(&mut self, (dt, mut rockets, mut accs, mut sounds, ents, updater): Self::SystemData) {
+        for (rocket, mut acc, mut se, ent) in (&mut rockets, &mut accs, &mut sounds, &*ents).join() {
+            *rocket = match *rocket {
+                RocketProjectile::Launching(a, mut d) => {
+                    if d > dt.0 {
+                        RocketProjectile::Launching(a, d - dt.0)
+                    } else {
+                        acc.0.z = a;
+                        se.mixer_controller.add(Noise::new(48000));
+                        RocketProjectile::Accelerating(Duration::from_millis(200))
+                    }
+                }
+                RocketProjectile::Accelerating(mut d) => {
+                    if d > dt.0 {
+                        RocketProjectile::Accelerating(d - dt.0)
+                    } else {
+                        acc.0.z = 0.0;
+                        RocketProjectile::Flying(Duration::from_millis(600))
+                    }
+                }
+                RocketProjectile::Flying(mut d) => {
+                    if d > dt.0 {
+                        RocketProjectile::Flying(d - dt.0)
+                    } else {
+                        se.spatial_controller.stop();
+                        ents.delete(ent);
+                        RocketProjectile::Flying(d)
+                    }
+                }
+            }
         }
     }
 }

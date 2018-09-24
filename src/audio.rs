@@ -1,10 +1,22 @@
 use std::sync::Arc;
 
-use ambisonic::{Ambisonic, SoundController};
+use ambisonic::{Ambisonic, AmbisonicBuilder, SoundController};
 
 use rodio::dynamic_mixer::{DynamicMixerController, mixer};
 
 use specs::prelude::*;
+
+pub struct Audio {
+    pub ambisonic: Ambisonic
+}
+
+impl Default for Audio {
+    fn default() -> Self {
+        Audio {
+            ambisonic: AmbisonicBuilder::default().build()
+        }
+    }
+}
 
 #[derive(Component)]
 pub struct SoundEmitter {
