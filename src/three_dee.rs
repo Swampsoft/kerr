@@ -12,7 +12,8 @@ pub fn projection(pos: Cylindric) -> Cartesian {
 pub fn projection_factor(z: f32) -> f32 {
     //10.0 / (9.0 + z + 0.1 * (z.abs() * z - 1.0))
     //10.0 / (9.0 + z.abs() * z / 5.0)
-    10.0 / (z + 1.0 * (z.abs() * z))
+    //10.0 / (z + 1.0 * (z.abs() * z))
+    10.0 / (1.0 + z * 3.0)
 }
 
 pub fn cylindric_pos_to_cartesian(pos: Cylindric) -> Cartesian {
