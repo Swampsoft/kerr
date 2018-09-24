@@ -1,5 +1,7 @@
 use std::time::Duration;
 
+use ambisonic::AmbisonicBuilder;
+
 use specs::prelude::*;
 
 pub use audio::SoundEmitter;
@@ -19,6 +21,7 @@ pub fn register_components(world: &mut World) {
     world.add_resource(DeltaTime(Duration::from_secs(0)));
     world.add_resource(InputState::new());
     world.add_resource(Resources::new());
+    world.add_resource(AmbisonicBuilder::new().build())
 }
 
 #[derive(Default)]

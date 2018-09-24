@@ -1,7 +1,7 @@
 use std::f32;
 use std::time::Duration;
 
-use ambisonic::{Ambisonic, AmbisonicBuilder};
+use ambisonic::{Ambisonic, AmbisonicBuilder, sources::Noise};
 
 use ggez::{
     graphics::{self, DrawMode, MeshBuilder, Point2, Rect}, Context,
@@ -24,7 +24,6 @@ use three_dee::projection_factor;
 
 pub struct WormholeState {
     world: World,
-    audio_context: Ambisonic,
     dispatcher: Dispatcher<'static, 'static>,
     quit: bool,
     update_time_remaining: Duration,
@@ -46,11 +45,8 @@ impl WormholeState {
 
         let rocket_sprite = world.write_resource::<Resources>().add_image(ctx, "/rocket.png")?;
 
-        let audio_context = AmbisonicBuilder::new().build();
-
-        let se = SoundEmitter::new(&audio_context);
-        se.mixer_controller.add(rodio::source::SineWave::new(40));
-        se.mixer_controller.add(rodio::source::SineWave::new(160).amplify(0.1));
+        let se = SoundEmitter::new(&world.read_resource::<Ambisonic>());
+        se.mixer_controller.add(Noise::new(48000));
 
         world.create_entity()
             .with(Pos::new(0.2, 0.25, 100.0))
@@ -101,7 +97,6 @@ impl WormholeState {
 
         let s = WormholeState {
             world,
-            audio_context,
             dispatcher,
             z_pos: 0.0,
             update_time_remaining: Duration::from_secs(0),
